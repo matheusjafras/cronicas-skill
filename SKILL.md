@@ -29,6 +29,7 @@ quando ele disser "não me pergunte mais nada / gere pra mim", siga até o fim s
 | `revisar` | 6. renderiza quadros-chave, olha e corrige |
 | `render` | 7. renderiza o MP4 final e entrega |
 | `publicar [data/hora]` | 8. escreve a legenda e **agenda** o vídeo no Instagram e no TikTok (Zernio) e no YouTube Shorts (API) |
+| `painel` | atualiza o painel de publicações (YouTube + lista de episódios): item 13 da etapa 8 |
 | `trocar-imagens` | substitui pinturas (ex.: versões em alta) e renderiza de novo |
 | `ajustar <pedido>` | muda uma cena/tempo/texto pedida pelo usuário, revisa e renderiza |
 | `lite [N ou temas]` | **formato leve, em lote** (padrão: 3 episódios): leia e siga **`LITE.md`** desta pasta |
@@ -240,7 +241,9 @@ cd projeto && npx remotion render EpNN-<Slug> out/cronicas_epNN_<slug>.mp4 --cod
 `public/textures/*.png` em vez de `feTurbulence` a cada quadro), use os fundos pré-desfocados e imagens ≤ 2400 px. `--gl=angle` (GPU) renderiza ~2× mais rápido com imagem idêntica
 (testado no Ep. 04). Nunca pare o terminal de um render em andamento: o FFmpeg cai na codificação (0xC0000142).
 Rode em segundo plano (~10–20 min). Depois: confira com ffprobe (1080×1920, 30 fps, h264+aac, duração ≈ áudio + 3 s),
-copie para `RAIZ/entregas/`, extraia 4–5 quadros do MP4 para conferir, e envie com `SendUserFile`. Depois, etapa 8.
+copie para `RAIZ/entregas/EPNN - <Nome>/` (uma pasta por episódio, nome com acentos, ex.: `EP04 - O rico e Lázaro`; só o final fica solto nela,
+prévias, testes e cópias vão para a subpasta `outras versões/`), acrescente o episódio em `RAIZ/entregas/LEIA-ME.txt` (título, arquivo final,
+duração; o link do YouTube entra na etapa 8), extraia 4–5 quadros do MP4 para conferir, e envie com `SendUserFile`. Depois, etapa 8.
 
 ## 8. Publicação no Instagram, no TikTok e no YouTube (sempre agendada)
 
@@ -263,15 +266,15 @@ Um post só, com as duas contas, sai no mesmo horário nas duas redes. `profile_
 3. **Upload do MP4** (não publica nada):
    `call_tool` `media_get_media_presigned_url` {`filename`, `content_type` `video/mp4`, `size`} → então
 ```bash
-curl -sS -X PUT -H "Content-Type: video/mp4" --upload-file "entregas/cronicas_epNN_<slug>.mp4" -o /dev/null -w "HTTP %{http_code}\n" "<uploadUrl>"
+curl -sS -X PUT -H "Content-Type: video/mp4" --upload-file "entregas/EPNN - <Nome>/cronicas_epNN_<slug>.mp4" -o /dev/null -w "HTTP %{http_code}\n" "<uploadUrl>"
 ```
    Espere `HTTP 200` (~1 min para 65 MB) e use o `publicUrl`. O link de upload vale 1 h; a mídia fica 7 dias — agende dentro disso ou reenvie.
 4. **Validação:** `validate_media` (`publicUrl`; Instagram até 300 MB, TikTok até 10 min) e `validate_post` com
    `platforms: [{platform: "instagram", platformSpecificData: {contentType: "reels", shareToFeed: true}}, {platform: "tiktok"}]`.
    Corrija até "No validation issues found". Para o TikTok, rode também o passo 7 com `dry_run: true`
    (não cria nada; espere `canPublish: true`).
-5. **Horário:** fila padrão **"Crônicas do Sagrado"** (`6ae68218b5bcae1b725392f5`): **1 vídeo por dia, todo dia, às 19h30**
-   (`America/Sao_Paulo`; ritmo escolhido pelo usuário em 31/10/2026). Mostre o próximo horário livre com
+5. **Horário:** fila padrão **"Crônicas do Sagrado"** (`6ae68218b5bcae1b725392f5`): **1 vídeo por dia, todo dia, às 7h**
+   (`America/Sao_Paulo`; o usuário trocou 19h30 por 7h em 02/11/2026: "19h fica tarde"; público católico reza cedo). Mostre o próximo horário livre com
    `queue_get_next_queue_slot` (ou vários com `queue_preview_queue`). Para mudar os horários: `queue_list_queue_slots` (`all: "true"`)
    e atualize a fila. Se o usuário der uma data, use-a.
 6. **Aprovação:** mostre a legenda (bloco de código) + o horário e espere o "sim". Se ele já disse para seguir sem perguntas,
@@ -318,15 +321,33 @@ As chaves ficam em `%USERPROFILE%\.cronicas-youtube\` (fora do OneDrive e do Git
     - Revise as emendas com stills e renderize como `cronicas_epNN_<slug>_short.mp4`. Instagram e TikTok continuam com a versão longa.
 11. **Agendar no mesmo horário do post do Zernio.** Pegue o horário em `posts_get` (vem em UTC) e converta para São Paulo (UTC−3):
 ```powershell
-python .claude\skills\cronicas\scripts\youtube_upload.py upload entregas\cronicas_epNN_<slug>.mp4 --publish-at AAAA-MM-DDTHH:MM --title '<título>' --description-file "CRONICAS SAGRADAS\<pasta>\descricao_youtube.txt" --tags "catolicos,igreja catolica,biblia,<tema>,fe catolica,cronicas do sagrado"
+python .claude\skills\cronicas\scripts\youtube_upload.py upload "entregas\EPNN - <Nome>\cronicas_epNN_<slug>.mp4" --publish-at AAAA-MM-DDTHH:MM --title '<título>' --description-file "CRONICAS SAGRADAS\<pasta>\descricao_youtube.txt" --tags "catolicos,igreja catolica,biblia,<tema>,fe catolica,cronicas do sagrado"
 ```
    - No PowerShell, o título vai entre **aspas simples**. Aspas curvas (“ ”) dentro de aspas duplas quebram o comando.
    - O vídeo sobe privado, com `publishAt`, e o YouTube publica sozinho na hora marcada. `--now` publica na hora: só use se o usuário pedir.
    - Sem rótulo de IA: o script manda `containsSyntheticMedia: false`, a mesma decisão tomada para o TikTok.
 12. **Conferir:** `youtube_upload.py status <ID>` deve mostrar `private` e o "Publica em" certo. `youtube_upload.py list` mostra os últimos vídeos do canal.
+   Anote o link (`https://youtube.com/shorts/<ID>`) no episódio em `entregas/LEIA-ME.txt`.
+   Mudar o horário de um vídeo já agendado: `youtube_upload.py reagendar <ID> --publish-at AAAA-MM-DDTHH:MM` (junto com `posts_update` no Zernio).
    - **"O login do YouTube venceu":** o app OAuth (projeto `custom-blade-513514-b7`) está em **modo de teste**, e nesse modo o login vence a cada 7 dias.
-     Rode `youtube_upload.py auth` em segundo plano. O usuário escolhe a conta akicesagamestuto e clica em Continuar → Selecionar tudo → Continuar.
+     Rode `python -u .claude\skills\cronicas\scripts\youtube_upload.py auth --chrome-perfil "Profile 10"` em segundo plano: o login abre no perfil
+     do Chrome da conta do canal ("THEO"), e o `-u` faz o link aparecer na saída, caso a aba não abra. O usuário escolhe a conta akicesagamestuto
+     e clica em Continuar → Selecionar tudo → Continuar. O login também pede a permissão opcional do YouTube Analytics (horas assistidas do painel);
+     sem ela, o resto funciona e o painel só fica sem as horas.
      Para acabar com isso, publique o app. O Google exige página inicial e política de privacidade no Branding para liberar o botão "Publicar app".
+
+### Painel de publicações
+
+13. **Atualizar o painel** depois de agendar (e quando o usuário pedir `painel`). O painel é um Dashboard no claude.ai:
+    https://claude.ai/artifact/UrisdEHo7WYHZn1swEsi3p. Instagram e TikTok entram sozinhos (ele lê o Zernio ao vivo).
+    Só o YouTube e a lista de episódios dependem deste passo:
+    - Episódio novo: acrescente a linha em `CRONICAS SAGRADAS/painel/episodios.json` (`ep`, `episodio`, `gancho`, `video_final`).
+      O `gancho` é o começo da 1ª linha da legenda e precisa ser também o começo do título do YouTube: é por ele que cada post é ligado ao episódio.
+    - Rode `python .claude\skills\cronicas\scripts\youtube_upload.py painel`. Ele grava `youtube_videos.json` e `youtube_canal.json` na mesma pasta.
+    - Suba cada JSON que mudou com `Artifact` (`url` do painel, `asset: true`, `file_path`; um arquivo por chamada).
+      Depois faça um `ArtifactData` `update` em `datasets/<id>` (`youtube_videos`, `youtube_canal` ou `episodios`) com o novo
+      `source.url` (`/_blob/<id>`) e `updated: {at: <agora, ISO>, by: "Claude"}`. Leia o documento antes, para ter o `if_version`.
+    - Apague o arquivo antigo com `Artifact` `delete` (`url` do painel + `path` = id antigo).
 
 ---
 
@@ -341,4 +362,8 @@ python .claude\skills\cronicas\scripts\youtube_upload.py upload entregas\cronica
 - `WordsAt` reserva espaço para palavras ainda invisíveis: a linha só fica centralizada quando todas aparecem;
   mantenha linhas curtas (tamanho 44–52 para 3 palavras em versaletes).
 - Passe `dur` às cenas; não dependa de `useVideoConfig().durationInFrames` dentro de `Sequence`.
+- `MorphWord` usa casas de largura fixa: palavras com I/Í ou espaço ficam com buracos ("I MAGEM", "ÊXODO   25"). Para trocar uma palavra
+  por outra de tamanho diferente, use `Fade` + `LetterReveal` (Ep. 06); para mudar só um número, gire só o número.
+- Frase repetida na narração ("dois querubins", "pense"): `cue`/`tl.at` pegam a primeira; sem o 2º argumento a cena recebe tempo
+  negativo e o render quebra com "inputRange must be strictly monotonically increasing".
 - Renders e downloads demorados: sempre em segundo plano.

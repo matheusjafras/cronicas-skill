@@ -134,12 +134,13 @@ cd projeto && node scripts/render_queue.mjs EpNN-A EpNN-B EpNN-C
 ```
 Sempre em segundo plano. Um bundle só, um episódio depois do outro (o notebook é um i3 de 2 núcleos: render em paralelo
 não ganha tempo e pode travar por memória). Conte ~9 min por episódio de 1min50 (um lote de 3 ≈ 30 min). A fila põe um
-teto de 8 Mbps (um vídeo de 1min50 fica perto de 110 MB; o Instagram aceita até 300 MB). Cada MP4 vai para `entregas/cronicas_epNN_<slug>.mp4`; o tempo de cada um
+teto de 8 Mbps (um vídeo de 1min50 fica perto de 110 MB; o Instagram aceita até 300 MB). Cada MP4 vai para `entregas/EPNN - <Nome>/cronicas_epNN_<slug>.mp4`
+(crie antes a pasta com o nome acentuado; sem ela, a fila cria uma a partir do id, sem acentos) e entra no `entregas/LEIA-ME.txt`; o tempo de cada um
 fica em `projeto/out/fila_render.log`. Nunca pare a fila no meio de um render. Lotes grandes: sugira deixar à noite.
 Depois: ffprobe (1080×1920, 30 fps, h264 + aac), 3 quadros de cada MP4 para conferir, `SendUserFile` com os vídeos.
 
 ## 9. Publicação
 
-Etapa 8 da SKILL.md para cada episódio, em ordem: a fila do Zernio pega os próximos horários livres (1 por dia, 19h30).
+Etapa 8 da SKILL.md para cada episódio, em ordem: a fila do Zernio pega os próximos horários livres (1 por dia, 7h).
 Mostre as N legendas + os horários juntos e peça **um** "sim" para o lote (o TikTok exige esse sim antes de
 `contentPreviewConfirmed`/`expressConsentGiven`).
