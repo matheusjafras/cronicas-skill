@@ -1,13 +1,15 @@
 ---
 name: cronicas
-description: Produz episódios do canal católico "Crônicas do Sagrado" no template Remotion — do roteiro e pinturas até o MP4 final e o vídeo agendado no Instagram e no TikTok, etapa por etapa (novo episódio, imagens, storyboard, narração ElevenLabs, montagem, revisão, render, publicação agendada via Zernio, ajustes). Use quando o usuário digitar /cronicas, pedir um novo episódio, pedir para agendar/postar um episódio no Instagram ou no TikTok, ou pedir para refazer uma etapa de um episódio existente.
+description: Produz episódios do canal católico "Crônicas do Sagrado" no template Remotion — do roteiro e pinturas até o MP4 final e o vídeo agendado no Instagram, no TikTok e no YouTube Shorts, etapa por etapa (novo episódio, imagens, storyboard, narração ElevenLabs, montagem, revisão, render, publicação agendada via Zernio + API do YouTube, ajustes). Tem também o modo leve `/cronicas lite`: lotes de vários episódios (Claude escreve os roteiros e acha as obras) montados por dados, com render rápido e fila. Use quando o usuário digitar /cronicas ou /cronicas lite, pedir episódios em volume/em lote/mais leves, pedir um novo episódio, pedir para agendar/postar um episódio no Instagram, no TikTok ou no YouTube, ou pedir para refazer uma etapa de um episódio existente.
 ---
 
 # Crônicas do Sagrado — produção de episódio
 
 Raiz: `C:\Users\user\OneDrive\Área de Trabalho\EDIÇÃO DE VIDEO` (abaixo, `RAIZ`).
 Projeto Remotion: `RAIZ/projeto` · componentes reutilizáveis: `projeto/src/cronicas/` · guia: `projeto/CRONICAS.md`.
-Episódio de referência (o padrão de qualidade): `projeto/src/ep01/` e `CRONICAS/cronicas_do_sagrado_ep01_judas/storyboard_ep01.md`.
+Episódio de referência (o padrão de qualidade): `projeto/src/ep01/` e `CRONICAS SAGRADAS/cronicas_do_sagrado_ep01_judas/storyboard_ep01.md`.
+Documentos de cada episódio (narração, storyboard, legendas, créditos): `RAIZ/CRONICAS SAGRADAS/<pasta do episódio>/`.
+O nome tem espaço: nos comandos, ponha o caminho entre aspas.
 Scripts desta skill: `RAIZ/.claude/skills/cronicas/scripts/`.
 
 Fale com o usuário em português do Brasil, com frases curtas. Ele prefere que o trabalho ande sozinho;
@@ -26,9 +28,10 @@ quando ele disser "não me pergunte mais nada / gere pra mim", siga até o fim s
 | `montar` | 5. escreve as cenas no Remotion presas às frases |
 | `revisar` | 6. renderiza quadros-chave, olha e corrige |
 | `render` | 7. renderiza o MP4 final e entrega |
-| `publicar [data/hora]` | 8. escreve a legenda e **agenda** o vídeo no Instagram e no TikTok (Zernio) |
+| `publicar [data/hora]` | 8. escreve a legenda e **agenda** o vídeo no Instagram e no TikTok (Zernio) e no YouTube Shorts (API) |
 | `trocar-imagens` | substitui pinturas (ex.: versões em alta) e renderiza de novo |
 | `ajustar <pedido>` | muda uma cena/tempo/texto pedida pelo usuário, revisa e renderiza |
+| `lite [N ou temas]` | **formato leve, em lote** (padrão: 3 episódios): leia e siga **`LITE.md`** desta pasta |
 
 Descubra o episódio em andamento pela pasta `projeto/src/epNN` mais recente, se o usuário não disser.
 
@@ -39,7 +42,7 @@ Descubra o episódio em andamento pela pasta `projeto/src/epNN` mais recente, se
 ```bash
 cd "RAIZ" && python .claude/skills/cronicas/scripts/new_episode.py . <nº> <slug_sem_acentos>
 ```
-Cria `CRONICAS/epNN_<slug>/` (com `pinturas_originais/` e `narracao_oficial.txt`), `projeto/public/epNN/`,
+Cria `CRONICAS SAGRADAS/epNN_<slug>/` (com `pinturas_originais/` e `narracao_oficial.txt`), `projeto/public/epNN/`,
 `projeto/src/epNN/{timeline.ts, Scenes.tsx, EpisodeNN.tsx, words.json}` e registra a composição no `Root.tsx`.
 Salve o texto da narração **exatamente como o usuário enviou** em `narracao_oficial.txt` (sem `**`, sem tags).
 Se o usuário mandou um ZIP/pasta de pinturas, copie para `pinturas_originais/` e leia `manifesto_cenas.json`/`LEIA_ME.txt` se existirem.
@@ -47,7 +50,7 @@ Se o usuário mandou um ZIP/pasta de pinturas, copie para `pinturas_originais/` 
 ## 2. Imagens
 
 ```bash
-python .claude/skills/cronicas/scripts/prepare_images.py "CRONICAS/epNN_<slug>/pinturas_originais" "projeto/public/epNN"
+python .claude/skills/cronicas/scripts/prepare_images.py "CRONICAS SAGRADAS/epNN_<slug>/pinturas_originais" "projeto/public/epNN"
 ```
 Remove bordas claras de recorte e amplia imagens pequenas. Se avisar baixa resolução, diga ao usuário
 (peça versões ≥ 1500 px, uma por arquivo, não em grade), mas continue com as ampliadas.
@@ -60,13 +63,13 @@ Preencha `IMG` em `projeto/src/epNN/Scenes.tsx` com os caminhos `epNN/<arquivo>.
 2400 px e gere fundos já desfocados em `public/epNN/bg/` (PIL, ~640 px, GaussianBlur 7) — nada de `blur()` CSS por quadro.
 As obras têm proporções variadas: **sempre passe `img={{w, h}}` ao `Cam`/`DepthPainting`** (sem isso a câmera assume 9:16 e
 distorce). Modelo: registro `ART` em `src/ep04/Scenes.tsx` (arquivo, tamanho, título, artista · data · acervo) + `ArtLabel`
-na tela. Mantenha `CRONICAS/epNN_<slug>/creditos_e_fontes.md` (obra, autoria, data, acervo, licença, URL, cenas). Recortes,
+na tela. Mantenha `CRONICAS SAGRADAS/epNN_<slug>/creditos_e_fontes.md` (obra, autoria, data, acervo, licença, URL, cenas). Recortes,
 molduras e figuras são tratamento editorial: nunca desenhe por cima da obra como se fosse parte dela; não remova marcas d'água;
 crédito obrigatório em fotos CC BY (ex.: Bento XVI, Peter Nguyen, CC BY 2.0). Falta uma obra? Sinalize, não substitua por IA.
 
 ## 3. Storyboard
 
-Escreva `CRONICAS/epNN_<slug>/storyboard_epNN.md` no formato do Ep. 01: arco de cor por ato, tabela de cenas
+Escreva `CRONICAS SAGRADAS/epNN_<slug>/storyboard_epNN.md` no formato do Ep. 01: arco de cor por ato, tabela de cenas
 (trecho exato · arquivo · composição · animação · texto editorial · som · transição) e tabela de uso das pinturas.
 Antes do áudio, a duração é só estimativa (~2,3 palavras/s); os tempos reais vêm do `words.json`.
 
@@ -88,7 +91,7 @@ Pausas extras (ex.: antes de uma revelação) entram no Remotion com `gaps` em `
 2. `creative_get_flow_run_status` até `all_completed`; baixe `content_url` com `curl -sS -o projeto/public/voiceover/epNN_<slug>.mp3 "<url>"` (o link expira em 2 h).
 3. Tempo das palavras (≈2–4 min, rode em segundo plano):
 ```bash
-python .claude/skills/cronicas/scripts/align_words.py projeto/public/voiceover/epNN_<slug>.mp3 CRONICAS/epNN_<slug>/narracao_oficial.txt projeto/src/epNN/words.json
+python .claude/skills/cronicas/scripts/align_words.py projeto/public/voiceover/epNN_<slug>.mp3 "CRONICAS SAGRADAS/epNN_<slug>/narracao_oficial.txt" projeto/src/epNN/words.json
 ```
 Confira a saída: "trechos ainda suspeitos: 0". Se houver, abra o JSON e corrija aquele trecho.
 
@@ -239,7 +242,7 @@ cd projeto && npx remotion render EpNN-<Slug> out/cronicas_epNN_<slug>.mp4 --cod
 Rode em segundo plano (~10–20 min). Depois: confira com ffprobe (1080×1920, 30 fps, h264+aac, duração ≈ áudio + 3 s),
 copie para `RAIZ/entregas/`, extraia 4–5 quadros do MP4 para conferir, e envie com `SendUserFile`. Depois, etapa 8.
 
-## 8. Publicação no Instagram e no TikTok (Zernio — sempre agendada)
+## 8. Publicação no Instagram, no TikTok e no YouTube (sempre agendada)
 
 Conector Zernio (ferramentas `mcp__c3fe37fd-…__*`; as que não aparecem na lista: `search_tools` + `call_tool`).
 Um post só, com as duas contas, sai no mesmo horário nas duas redes. `profile_id` `6ae6755731c8c700fc50d6d4`.
@@ -252,7 +255,7 @@ Um post só, com as duas contas, sai no mesmo horário nas duas redes. `profile_
 
 1. **Contas:** `accounts_get_all_accounts_health`. Se alguma tiver `needsReconnect` ou `canPost: false`, pare e peça
    para reconectar em zernio.com (o token do Instagram vence em 30/12/2026; o do TikTok é renovado pelo Zernio a cada 24 h).
-2. **Legenda** em `CRONICAS/<pasta do episódio>/legenda_instagram.txt`, tirada da narração oficial (modelo: Ep. 01):
+2. **Legenda** em `CRONICAS SAGRADAS/<pasta do episódio>/legenda_instagram.txt`, tirada da narração oficial (modelo: Ep. 01):
    - 1ª linha = o gancho do vídeo, até 125 caracteres (é o que aparece antes do "… mais");
    - corpo curto com frases da narração + referências bíblicas (Mt 27,3-5) — mesmas regras de fidelidade da etapa 3;
    - fecho `Crônicas do Sagrado · Ep.NN` + **um** pedido só (ex.: seguir para ver o próximo episódio);
@@ -294,6 +297,36 @@ queued_from_profile: "6ae6755731c8c700fc50d6d4"      ← próximo horário da fi
    para `scheduled_for` (fura a trava da fila).
 8. **Conferir:** `posts_get` → status `scheduled` e o horário certo; informe o ID ao usuário. Cancelar antes do horário:
    `posts_delete`. Depois do horário: `posts_list_failed` mostra falhas e `posts_retry` tenta de novo.
+
+### YouTube Shorts (API oficial, grátis; não passa pelo Zernio)
+
+O plano grátis do Zernio só cobre 2 contas, então o YouTube vai pelo script `scripts/youtube_upload.py`.
+Canal **Crônicas do Sagrado** (`UCCaEJ0t4dUpsBSNKcb6GXsw`), conta Google `akicesagamestuto@gmail.com`.
+As chaves ficam em `%USERPROFILE%\.cronicas-youtube\` (fora do OneDrive e do GitHub). Cada upload gasta 1 unidade da cota (limite de 100 por dia).
+
+9. **Descrição** em `CRONICAS SAGRADAS/<pasta do episódio>/descricao_youtube.txt`: a legenda do Instagram, trocando "Siga" por "Inscreva-se".
+   **Título**: até 100 caracteres, sem `<` nem `>`. Use o gancho (1ª linha) e encurte se passar.
+10. **Duração:** Short é vídeo vertical de **até 3 min**. Acima disso, entra como vídeo normal, na aba "Vídeos". Foi o caso do Ep.02 Pedro, com 3min50,
+    e o usuário quis uma **versão curta** só para o YouTube. Para fazer uma:
+    - Escolha frases inteiras que não quebrem o arco (digressões, citações secundárias, perguntas repetidas). Mire em ≤ 2min55.
+    - Ache o silêncio real de cada ponta com `ffmpeg -ss <s> -t 4 -i voz.mp3 -af silencedetect=noise=-38dB:d=0.12 -f null -`
+      e corte no meio dele. O `words.json` erra até ~0,4 s.
+    - Crie `timelineShort.ts` com `cuts` em `createEpisodeTimeline`. A voz é emendada sozinha e as palavras de dentro somem.
+      Crie também `EpisodeNNShort.tsx`, sem as cenas cortadas e com as transições refeitas nas emendas (máscara pede `exit: "hold"` antes).
+      No `Scenes.tsx`, o `useCue` precisa ler a linha do tempo de um contexto (`TimelineCtx`, como no Ep.02), e não do `tl` importado.
+      Modelo: `src/ep02/` (composição `Ep02-Pedro-Short`).
+    - Revise as emendas com stills e renderize como `cronicas_epNN_<slug>_short.mp4`. Instagram e TikTok continuam com a versão longa.
+11. **Agendar no mesmo horário do post do Zernio.** Pegue o horário em `posts_get` (vem em UTC) e converta para São Paulo (UTC−3):
+```powershell
+python .claude\skills\cronicas\scripts\youtube_upload.py upload entregas\cronicas_epNN_<slug>.mp4 --publish-at AAAA-MM-DDTHH:MM --title '<título>' --description-file "CRONICAS SAGRADAS\<pasta>\descricao_youtube.txt" --tags "catolicos,igreja catolica,biblia,<tema>,fe catolica,cronicas do sagrado"
+```
+   - No PowerShell, o título vai entre **aspas simples**. Aspas curvas (“ ”) dentro de aspas duplas quebram o comando.
+   - O vídeo sobe privado, com `publishAt`, e o YouTube publica sozinho na hora marcada. `--now` publica na hora: só use se o usuário pedir.
+   - Sem rótulo de IA: o script manda `containsSyntheticMedia: false`, a mesma decisão tomada para o TikTok.
+12. **Conferir:** `youtube_upload.py status <ID>` deve mostrar `private` e o "Publica em" certo. `youtube_upload.py list` mostra os últimos vídeos do canal.
+   - **"O login do YouTube venceu":** o app OAuth (projeto `custom-blade-513514-b7`) está em **modo de teste**, e nesse modo o login vence a cada 7 dias.
+     Rode `youtube_upload.py auth` em segundo plano. O usuário escolhe a conta akicesagamestuto e clica em Continuar → Selecionar tudo → Continuar.
+     Para acabar com isso, publique o app. O Google exige página inicial e política de privacidade no Branding para liberar o botão "Publicar app".
 
 ---
 

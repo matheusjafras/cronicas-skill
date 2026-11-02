@@ -4,7 +4,7 @@ Uso: python new_episode.py <raiz "EDIÇÃO DE VIDEO"> <numero> <slug>
 Ex.:  python new_episode.py . 2 pedro_nega_jesus
 
 Cria:
-  CRONICAS/epNN_<slug>/            (pinturas, narracao_oficial.txt, storyboard)
+  CRONICAS SAGRADAS/epNN_<slug>/   (pinturas, narracao_oficial.txt, storyboard)
   projeto/public/epNN/             (pinturas preparadas)
   projeto/src/epNN/timeline.ts     (tempo da narração, lê words.json)
   projeto/src/epNN/Scenes.tsx      (cenas — modelo com abertura e encerramento)
@@ -23,6 +23,7 @@ Comp = f"Episode{nn}"
 comp_id = f"Ep{nn}-" + "-".join(p.capitalize() for p in slug.split("_"))[:40]
 proj = os.path.join(root, "projeto")
 src = os.path.join(proj, "src", ep)
+docs = os.path.join(root, "CRONICAS SAGRADAS", f"{ep}_{slug}")
 
 
 def write(path, text):
@@ -35,9 +36,9 @@ def write(path, text):
     print("criado:", path)
 
 
-os.makedirs(os.path.join(root, "CRONICAS", f"{ep}_{slug}", "pinturas_originais"), exist_ok=True)
+os.makedirs(os.path.join(docs, "pinturas_originais"), exist_ok=True)
 os.makedirs(os.path.join(proj, "public", ep), exist_ok=True)
-write(os.path.join(root, "CRONICAS", f"{ep}_{slug}", "narracao_oficial.txt"), "")
+write(os.path.join(docs, "narracao_oficial.txt"), "")
 write(os.path.join(src, "words.json"), json.dumps([{"text": "…", "startMs": 0, "endMs": 1000, "timestampMs": 500, "confidence": None}]))
 
 write(
