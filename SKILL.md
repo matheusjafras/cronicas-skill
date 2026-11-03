@@ -329,12 +329,30 @@ python .claude\skills\cronicas\scripts\youtube_upload.py upload "entregas\EPNN -
 12. **Conferir:** `youtube_upload.py status <ID>` deve mostrar `private` e o "Publica em" certo. `youtube_upload.py list` mostra os últimos vídeos do canal.
    Anote o link (`https://youtube.com/shorts/<ID>`) no episódio em `entregas/LEIA-ME.txt`.
    Mudar o horário de um vídeo já agendado: `youtube_upload.py reagendar <ID> --publish-at AAAA-MM-DDTHH:MM` (junto com `posts_update` no Zernio).
+   Trocar o vídeo de um agendamento (render novo): no Zernio, suba o MP4 novo e use `call_tool` `posts_update_post` com o mesmo `post_id`
+   e `media_items` novos (horário e configurações do TikTok ficam). No YouTube não dá para trocar o arquivo: suba o novo no mesmo horário
+   e rode `youtube_upload.py desagendar <ID antigo>` (fica privado, sem horário). Apagar o antigo é com o usuário, no YouTube Studio.
    - **"O login do YouTube venceu":** o app OAuth (projeto `custom-blade-513514-b7`) está em **modo de teste**, e nesse modo o login vence a cada 7 dias.
      Rode `python -u .claude\skills\cronicas\scripts\youtube_upload.py auth --chrome-perfil "Profile 10"` em segundo plano: o login abre no perfil
      do Chrome da conta do canal ("THEO"), e o `-u` faz o link aparecer na saída, caso a aba não abra. O usuário escolhe a conta akicesagamestuto
      e clica em Continuar → Selecionar tudo → Continuar. O login também pede a permissão opcional do YouTube Analytics (horas assistidas do painel);
      sem ela, o resto funciona e o painel só fica sem as horas.
      Para acabar com isso, publique o app. O Google exige página inicial e política de privacidade no Branding para liberar o botão "Publicar app".
+
+### Facebook (Graph API oficial, grátis; não passa pelo Zernio)
+
+Página **Crônicas do Sagrado**: id na API `1521846121001422` (o link `profile.php?id=61596302966647` usa outro id).
+Script `scripts/facebook_upload.py`, app da Meta "Cronicas Publicador" (`1162878049422733`, modo de desenvolvimento).
+O token da Página fica em `%USERPROFILE%\.cronicas-facebook\page_token.json` e não vence. O Facebook agenda sozinho, então funciona com o PC desligado.
+
+- **Agendar no mesmo horário do post do Zernio**, com a legenda do Instagram:
+```powershell
+python .claude\skills\cronicas\scripts\facebook_upload.py upload "entregas\<pasta>\cronicas_epNN_<slug>.mp4" --publish-at AAAA-MM-DDTHH:MM --title '<gancho>' --description-file "CRONICAS SAGRADAS\<pasta>\legenda_instagram.txt"
+```
+  `--now` só se o usuário pedir. Conferir: `facebook_upload.py list` (ou `status ID`).
+- **Login perdido** (erro de token): rode `python -u .claude\skills\cronicas\scripts\facebook_upload.py auth --sem-navegador` em segundo plano. Depois abra no Chrome
+  (Claude in Chrome, conta Matheus Reis) o link que ele imprime e clique em Continuar. O token chega direto no script, sem passar pela conversa.
+  A Página só apareceu quando o login pediu `business_management`.
 
 ### Painel de publicações
 

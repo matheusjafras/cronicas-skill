@@ -194,6 +194,22 @@ def cmd_reagendar(args):
     print("Publicado agora." if args.now else f"Reagendado: {args.publish_at} (São Paulo)")
 
 
+def cmd_desagendar(args):
+    # Para trocar o vídeo de um agendamento: o YouTube não troca o arquivo de um vídeo enviado.
+    # Sobe-se o novo e este perde o horário (fica privado). Apagar fica com o usuário, no YouTube Studio.
+    yt = youtube()
+    items = yt.videos().list(part="status", id=args.video_id).execute()["items"]
+    if not items:
+        sys.exit("Vídeo não encontrado nesse canal.")
+    st = items[0]["status"]
+    if st["privacyStatus"] != "private" or "publishAt" not in st:
+        sys.exit("Esse vídeo não está agendado (já é público ou não tem horário marcado).")
+    keep = ("embeddable", "license", "publicStatsViewable", "selfDeclaredMadeForKids", "containsSyntheticMedia")
+    status = {**{k: st[k] for k in keep if k in st}, "privacyStatus": "private"}
+    yt.videos().update(part="status", body={"id": args.video_id, "status": status}).execute()
+    print("Agendamento cancelado: o vídeo continua privado e não vai ao ar.")
+
+
 def cmd_status(args):
     items = youtube().videos().list(part="snippet,status,processingDetails", id=args.video_id).execute()["items"]
     if not items:
@@ -350,6 +366,9 @@ def main():
     quando.add_argument("--publish-at", help="AAAA-MM-DDTHH:MM, horário de São Paulo")
     quando.add_argument("--now", action="store_true", help="publica na hora um vídeo agendado (só se o usuário pedir)")
     re_.set_defaults(func=cmd_reagendar)
+    de = sub.add_parser("desagendar", help="tira o horário de um vídeo agendado (fica privado, não apaga)")
+    de.add_argument("video_id")
+    de.set_defaults(func=cmd_desagendar)
     ls = sub.add_parser("list", help="últimos vídeos do canal e agendamentos")
     ls.add_argument("-n", type=int, default=10)
     ls.set_defaults(func=cmd_list)
